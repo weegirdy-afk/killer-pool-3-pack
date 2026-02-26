@@ -12,8 +12,8 @@
   --panel:rgba(255,255,255,.18);
   --border:rgba(255,255,255,.28);
 }
-
 *{box-sizing:border-box;}
+
 body{
   margin:0;
   min-height:100vh;
@@ -25,7 +25,7 @@ body{
   padding:18px 10px 26px;
 }
 
-.frame{width:min(720px,100%);text-align:center;position:relative;}
+.frame{width:min(740px,100%);text-align:center;position:relative;}
 
 h1{
   font-weight:1000;
@@ -57,8 +57,18 @@ input{
   text-align:center;
   outline:none;
 }
+input::placeholder{ color: rgba(255,255,255,.85); }
 
-button{font-weight:900;cursor:pointer;letter-spacing:.2px;}
+button{
+  font-weight:900;
+  cursor:pointer;
+  letter-spacing:.2px;
+  transform: translateY(0);
+  transition: transform .08s ease, filter .15s ease;
+}
+button:active{ transform: translateY(1px) scale(.99); }
+button:hover{ filter: brightness(1.06); }
+
 .secondary{background:#3498db;color:#fff;}
 .play{background:#2ecc71;color:#111;}
 .miss{background:#e67e22;color:#111;}
@@ -72,12 +82,10 @@ button{font-weight:900;cursor:pointer;letter-spacing:.2px;}
   right:10px;
   display:flex;
   gap:8px;
-  z-index:1500;
+  z-index:2000;
 }
-
 .smallBtn{
-  width:auto;
-  max-width:none;
+  width:auto; max-width:none;
   padding:8px 12px;
   margin:0;
   font-size:14px;
@@ -114,7 +122,7 @@ button{font-weight:900;cursor:pointer;letter-spacing:.2px;}
   gap:10px;
   justify-content:center;
 }
-.btnRow button{width:min(210px,46%);}
+.btnRow button{ width:min(210px,46%); }
 
 .piles{
   display:grid;
@@ -143,6 +151,7 @@ button{font-weight:900;cursor:pointer;letter-spacing:.2px;}
   font-size:34px;
   font-weight:1000;
 }
+
 .muted{
   opacity:.9;
   font-weight:800;
@@ -180,11 +189,10 @@ button{font-weight:900;cursor:pointer;letter-spacing:.2px;}
   70%{opacity:1;transform:scale(1.00);}
   100%{opacity:0;transform:scale(1.10);}
 }
-
 .cardPile{
   position:relative;
-  width:160px;
-  height:210px;
+  width:170px;
+  height:220px;
   transform:translateY(6px);
   filter:drop-shadow(0 18px 40px rgba(0,0,0,.6));
 }
@@ -195,15 +203,15 @@ button{font-weight:900;cursor:pointer;letter-spacing:.2px;}
   background:linear-gradient(180deg, rgba(255,255,255,.95), rgba(230,230,230,.95));
   border:1px solid rgba(255,255,255,.65);
 }
-.cardSheet:nth-child(1){ transform:rotate(-7deg) translate(-10px, 8px); opacity:.95;}
-.cardSheet:nth-child(2){ transform:rotate(6deg) translate(12px, 14px); opacity:.92;}
-.cardSheet:nth-child(3){ transform:rotate(-2deg) translate(4px, 2px); opacity:1;}
+.cardSheet:nth-child(1){ transform:rotate(-8deg) translate(-10px, 10px); opacity:.92;}
+.cardSheet:nth-child(2){ transform:rotate(7deg) translate(12px, 16px); opacity:.90;}
+.cardSheet:nth-child(3){ transform:rotate(-2deg) translate(5px, 3px); opacity:1;}
 .cardStamp{
   position:absolute;
   inset:0;
   display:grid;
   place-items:center;
-  font-size:62px;
+  font-size:64px;
   opacity:.9;
 }
 
@@ -274,11 +282,11 @@ button{font-weight:900;cursor:pointer;letter-spacing:.2px;}
 
       <div class="piles">
         <div class="pile">
-          <h3>Pile 1 — In Play (active lives)</h3>
+          <h3>Pile 1 — In Play (on players)</h3>
           <div class="count" id="p1">0</div>
         </div>
         <div class="pile">
-          <h3>Pile 2 — Banked (earned, not active yet)</h3>
+          <h3>Pile 2 — Banked (safe)</h3>
           <div class="count" id="p2">0</div>
         </div>
         <div class="pile">
@@ -287,7 +295,9 @@ button{font-weight:900;cursor:pointer;letter-spacing:.2px;}
         </div>
       </div>
 
-      <div class="muted">Lives are hidden from players. Banked lives only become active on reshuffle.</div>
+      <div class="muted">
+        Piles are secret (counts only). Pot/Black moves 1 life from P1 → P2. Reshuffle when P1 hits 0.
+      </div>
     </div>
   </div>
 </div>
@@ -317,16 +327,11 @@ button{font-weight:900;cursor:pointer;letter-spacing:.2px;}
 <script>
 const baseDeck = ["A","K","Q","J","10","9","8","7","6","5","4","3","2"];
 
-let players = [];        // { name, card, activeLives, bankedLives }
-let activePlayers = [];  // indices
+let players = [];        // { name, card, inPlay, banked }
+let activePlayers = [];  // indices of players still alive (inPlay+banked > 0)
 let currentIdx = null;
 
-// Three piles (counts only)
-let pileDead = 0;        // pile 3
-
-// Hidden "earn pack" that fuels banking (NOT shown; reshuffle happens when this empties)
-let earnPack = [];       // array of tokens (values don't matter; only counts)
-const EARN_PACK_MULTIPLIER = 3; // 39 tokens total (3x A-2), adjustable
+let pileDead = 0;
 
 function shuffle(arr){
   const a = [...arr];
@@ -335,12 +340,6 @@ function shuffle(arr){
     [a[i],a[j]]=[a[j],a[i]];
   }
   return a;
-}
-
-function buildEarnPack(){
-  const pack = [];
-  for (let i=0;i<EARN_PACK_MULTIPLIER;i++) pack.push(...baseDeck);
-  return shuffle(pack);
 }
 
 function addPlayer(){
@@ -358,24 +357,22 @@ function drawCards(){
 
   if (!names.length) return alert("Enter at least 1 player.");
 
-  // assign unique cards
   const deck = shuffle([...baseDeck]);
+
   players = names.map(n => ({
     name: n,
-    card: deck.pop(),
-    activeLives: 3,    // pile 1 lives (in play)
-    bankedLives: 0     // pile 2 lives (earned, waiting)
+    card: deck.pop(),  // assigned card never changes
+    inPlay: 3,         // Pile 1 lives
+    banked: 0          // Pile 2 lives
   }));
 
   activePlayers = [];
   currentIdx = null;
   pileDead = 0;
 
-  // hidden earn pack used for pot/black awards
-  earnPack = buildEarnPack();
-
   const results = document.getElementById("results");
-  results.innerHTML = "<div style='font-weight:900; margin:10px 0 6px;'>Dealt:</div>" +
+  results.innerHTML =
+    "<div style='font-weight:1000; margin:10px 0 6px;'>Dealt:</div>" +
     players.map(p => `<div>${escapeHtml(p.name)} — <strong>${escapeHtml(p.card)}</strong></div>`).join("");
 
   document.getElementById("startBtn").style.display = "inline-block";
@@ -390,7 +387,52 @@ function startGame(){
   nextTurn();
 }
 
+function totalPile1(){
+  return players.reduce((sum,p)=>sum + Math.max(0,p.inPlay), 0);
+}
+function totalPile2(){
+  return players.reduce((sum,p)=>sum + Math.max(0,p.banked), 0);
+}
+
+function updatePilesUI(){
+  document.getElementById("p1").textContent = totalPile1();
+  document.getElementById("p2").textContent = totalPile2();
+  document.getElementById("p3").textContent = pileDead;
+}
+
+function showReshuffle(){
+  const o = document.getElementById("reshuffleOverlay");
+  o.style.display = "grid";
+  const t = document.getElementById("reshuffleText");
+  t.style.animation = "none";
+  void t.offsetWidth;
+  t.style.animation = "";
+  setTimeout(()=>{ o.style.display = "none"; }, 1400);
+}
+
+// When Pile 1 is empty, move ALL banked -> in play (global reshuffle)
+function reshuffleIfNeeded(){
+  if (totalPile1() === 0 && totalPile2() > 0){
+    showReshuffle();
+    players.forEach(p=>{
+      p.inPlay += p.banked;
+      p.banked = 0;
+    });
+  }
+}
+
+function pickShooterIndex(){
+  // Only players with inPlay > 0 can be picked as "in play"
+  const candidates = activePlayers.filter(i => players[i].inPlay > 0);
+  if (candidates.length === 0) return null;
+  return candidates[Math.floor(Math.random()*candidates.length)];
+}
+
 function nextTurn(){
+  // remove anyone fully dead from activePlayers (safety)
+  activePlayers = activePlayers.filter(i => (players[i].inPlay + players[i].banked) > 0);
+
+  // win condition: only one person has any lives (inplay+banked)
   if (activePlayers.length === 1){
     const w = players[activePlayers[0]];
     document.getElementById("currentName").textContent = `🏆 ${w.name} WINS`;
@@ -405,97 +447,65 @@ function nextTurn(){
     return;
   }
 
-  currentIdx = activePlayers[Math.floor(Math.random()*activePlayers.length)];
+  // if nobody is in play right now, reshuffle (if possible) then try again
+  if (totalPile1() === 0){
+    reshuffleIfNeeded();
+  }
+
+  const idx = pickShooterIndex();
+  if (idx === null){
+    // still nobody in play (means no banked either) => end
+    document.getElementById("currentName").textContent = "Game Over";
+    document.getElementById("cardBox").textContent = "—";
+    updatePilesUI();
+    return;
+  }
+
+  currentIdx = idx;
   const p = players[currentIdx];
   document.getElementById("currentName").textContent = p.name;
   document.getElementById("cardBox").textContent = p.card;
   updatePilesUI();
 }
 
-function totalPile1(){
-  return players.reduce((sum,p)=>sum + Math.max(0,p.activeLives), 0);
-}
-function totalPile2(){
-  return players.reduce((sum,p)=>sum + Math.max(0,p.bankedLives), 0);
-}
-
-function updatePilesUI(){
-  document.getElementById("p1").textContent = totalPile1();
-  document.getElementById("p2").textContent = totalPile2();
-  document.getElementById("p3").textContent = pileDead;
-}
-
-function showReshuffle(){
-  const o = document.getElementById("reshuffleOverlay");
-  o.style.display = "grid";
-  // restart animation by forcing reflow on text
-  const t = document.getElementById("reshuffleText");
-  t.style.animation = "none";
-  void t.offsetWidth;
-  t.style.animation = "";
-  setTimeout(()=>{ o.style.display = "none"; }, 1400);
-}
-
-function doReshuffleIfNeeded(){
-  // Trigger reshuffle when the hidden earnPack runs out (i.e., banking is "used up")
-  if (earnPack.length === 0 && totalPile2() > 0){
-    showReshuffle();
-    // Move ALL banked lives into active lives (Pile 2 -> Pile 1)
-    players.forEach(p => {
-      p.activeLives += p.bankedLives;
-      p.bankedLives = 0;
-    });
-    // Rebuild earn pack for the next cycle (same size)
-    earnPack = buildEarnPack();
-  }
-}
-
-function awardBankedLifeToCurrent(){
-  // Banking uses 1 token from earnPack. If empty, reshuffle happens first.
-  doReshuffleIfNeeded();
-  if (earnPack.length === 0){
-    // Still empty and no banked lives -> nothing can be earned
-    return false;
-  }
-  // Consume a token and add 1 banked life to the player (Pile 2)
-  earnPack.pop();
-  players[currentIdx].bankedLives += 1;
-  return true;
-}
-
-function loseLifeFromCurrent(){
-  const p = players[currentIdx];
-
-  // Lose active life first (Pile 1). If none, try to lose banked? (usually not needed)
-  if (p.activeLives > 0){
-    p.activeLives -= 1;
-    pileDead += 1;
-  } else if (p.bankedLives > 0){
-    // edge case: if someone somehow has 0 active but banked exists, kill banked
-    p.bankedLives -= 1;
-    pileDead += 1;
-  }
-
-  // OUT if total lives = 0
-  if (p.activeLives <= 0 && p.bankedLives <= 0){
-    activePlayers = activePlayers.filter(i => i !== currentIdx);
-  }
-}
-
+/*
+RULES (this is the key fix):
+- POT / BLACK: move 1 life from THIS PLAYER’S inPlay -> banked  (Pile 1 -> Pile 2)
+- MISS / WHITE: move 1 life from THIS PLAYER’S inPlay -> dead     (Pile 1 -> Pile 3)
+- Reshuffle only when TOTAL pile 1 is 0.
+*/
 function doAction(type){
   if (currentIdx === null) return;
+  const p = players[currentIdx];
 
   if (type === "pot" || type === "black"){
-    // IMPORTANT: This does NOT increase pile 1 immediately.
-    // It banks a life into pile 2, and pile 2 only becomes active on reshuffle.
-    awardBankedLifeToCurrent();
+    // if P1 empty globally, reshuffle first (so players can bank again later)
+    if (totalPile1() === 0) reshuffleIfNeeded();
+
+    // Move one of THIS PLAYER'S in-play lives to banked
+    if (p.inPlay > 0){
+      p.inPlay -= 1;  // ✅ this is why you’ll SEE P1 drop
+      p.banked += 1;  // ✅ and P2 rise
+    }
     updatePilesUI();
     nextTurn();
     return;
   }
 
   if (type === "miss" || type === "white"){
-    loseLifeFromCurrent();
+    if (p.inPlay > 0){
+      p.inPlay -= 1;
+      pileDead += 1;
+    }
+
+    // if player has no inPlay and no banked, they’re out
+    if ((p.inPlay + p.banked) <= 0){
+      activePlayers = activePlayers.filter(i => i !== currentIdx);
+    }
+
+    // if after losing, P1 becomes empty, reshuffle before next shooter
+    if (totalPile1() === 0) reshuffleIfNeeded();
+
     updatePilesUI();
     nextTurn();
     return;
@@ -515,17 +525,16 @@ function toggleRef(){
     <span class="refPill">P1 In Play: ${totalPile1()}</span>
     <span class="refPill">P2 Banked: ${totalPile2()}</span>
     <span class="refPill">P3 Dead: ${pileDead}</span>
-    <span class="refPill">Earn pack left: ${earnPack.length}</span>
   </div><br>`);
 
   lines.push("<div><strong>Players:</strong></div>");
-  players.forEach((p,i)=>{
+  players.forEach((pl,i)=>{
     const status = activePlayers.includes(i) ? "IN" : "OUT";
     const shooter = (i===currentIdx && status==="IN") ? " — SHOOTER" : "";
     lines.push(
-      `${escapeHtml(p.name)} — ${escapeHtml(p.card)} — ` +
-      `Active: ${p.activeLives}, Banked: ${p.bankedLives} ` +
-      `<span class="refPill">${status}${shooter}</span>`
+      `${escapeHtml(pl.name)} — ${escapeHtml(pl.card)} — ` +
+      `InPlay: ${pl.inPlay}, Banked: ${pl.banked}` +
+      ` <span class="refPill">${status}${shooter}</span>`
     );
   });
 
