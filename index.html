@@ -1,669 +1,395 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Killer Pool</title>
 
 <style>
-  :root{
-    --bg1:#66e0b1;
-    --bg2:#2fbf8f;
-    --panel: rgba(255,255,255,.18);
-    --panel2: rgba(255,255,255,.12);
-    --border: rgba(255,255,255,.26);
-    --text:#f7fcff;
-    --shadow: rgba(0,0,0,.25);
-    --btnText:#0b0b0b;
-  }
+:root{
+  --bg1:#6ff0c0;
+  --bg2:#29b98b;
+  --panel:rgba(255,255,255,.18);
+  --border:rgba(255,255,255,.28);
+}
 
-  *{ box-sizing:border-box; }
+*{box-sizing:border-box;}
 
-  body{
-    margin:0;
-    min-height:100vh;
-    display:flex;
-    justify-content:center;
-    background: linear-gradient(180deg, var(--bg1), var(--bg2));
-    color: var(--text);
-    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-    padding: 18px 12px 28px;
-  }
+body{
+  margin:0;
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+  background:linear-gradient(180deg,var(--bg1),var(--bg2));
+  font-family:system-ui,Segoe UI,Roboto,Arial;
+  color:#fff;
+  padding:20px 10px;
+}
 
-  .frame{
-    width:min(640px, 100%);
-    text-align:center;
-    position:relative;
-  }
+.frame{width:min(700px,100%);text-align:center;position:relative;}
 
-  h1{
-    margin: 10px 0 14px;
-    font-weight: 950;
-    letter-spacing: .5px;
-    text-shadow: 0 10px 30px rgba(0,0,0,.35);
-  }
+h1{
+  font-weight:900;
+  margin:10px 0 14px;
+  text-shadow:0 8px 25px rgba(0,0,0,.3);
+}
 
-  .rail{
-    border-radius: 18px;
-    padding: 14px 12px 18px;
-    background: var(--panel);
-    border: 1px solid var(--border);
-    box-shadow: 0 10px 30px var(--shadow);
-  }
+.rail{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:18px;
+  padding:14px;
+  box-shadow:0 12px 30px rgba(0,0,0,.25);
+}
 
-  input, button{
-    width: 92%;
-    max-width: 340px;
-    padding: 12px 14px;
-    margin: 7px 0;
-    font-size: 18px;
-    border-radius: 14px;
-    border: none;
-    outline: none;
-  }
+input,button{
+  width:92%;
+  max-width:340px;
+  padding:12px;
+  margin:7px 0;
+  border-radius:14px;
+  border:none;
+  font-size:18px;
+}
 
-  input{
-    background: rgba(255,255,255,.22);
-    color: var(--text);
-    border: 1px solid rgba(255,255,255,.28);
-    text-align:center;
-  }
-  input::placeholder{ color: rgba(247,252,255,.80); }
+input{
+  background:rgba(255,255,255,.25);
+  color:#fff;
+  text-align:center;
+}
 
-  button{
-    font-weight: 900;
-    letter-spacing: .2px;
-    cursor:pointer;
-    transform: translateY(0);
-    transition: transform .08s ease, filter .15s ease;
-  }
-  button:active{ transform: translateY(1px) scale(.99); }
-  button:hover{ filter: brightness(1.06); }
+button{font-weight:800;cursor:pointer;}
 
-  .secondary{
-    background: linear-gradient(180deg, rgba(61,152,219,1), rgba(40,115,175,1));
-    color: #fff;
-  }
-  .play{
-    background: linear-gradient(180deg, rgba(46,204,113,1), rgba(33,158,84,1));
-    color: var(--btnText);
-  }
-  .miss{
-    background: linear-gradient(180deg, rgba(230,126,34,1), rgba(190,92,12,1));
-    color: var(--btnText);
-  }
-  .pot{
-    background: linear-gradient(180deg, rgba(26,188,156,1), rgba(14,140,118,1));
-    color: var(--btnText);
-  }
-  .black{
-    background: linear-gradient(180deg, rgba(255,255,255,.22), rgba(0,0,0,.65));
-    border: 1px solid rgba(255,255,255,.22);
-    color: #fff;
-  }
-  .whiteball{
-    background: linear-gradient(180deg, rgba(255,255,255,.95), rgba(225,225,225,.95));
-    color: #111;
-    border: 1px solid rgba(255,255,255,.45);
-  }
+.secondary{background:#3498db;color:#fff;}
+.play{background:#2ecc71;color:#111;}
+.miss{background:#e67e22;color:#111;}
+.pot{background:#1abc9c;color:#111;}
+.black{background:#000;color:#fff;}
+.whiteball{background:#fff;color:#111;}
 
-  #results{
-    margin-top: 8px;
-  }
-  #results h2{
-    margin: 14px 0 8px;
-    font-size: 18px;
-    opacity: .95;
-  }
-  .dealRow{
-    margin: 10px auto 0;
-    width: 92%;
-    max-width: 460px;
-    padding: 10px 12px;
-    border-radius: 14px;
-    background: var(--panel2);
-    border: 1px solid rgba(255,255,255,.18);
-    display:flex;
-    justify-content: space-between;
-    align-items:center;
-    gap: 12px;
+.topButtons{
+  position:absolute;
+  top:10px;
+  right:10px;
+  display:flex;
+  gap:6px;
+}
 
-    opacity: 0;
-    transform: translateY(18px);
-    animation: dealIn .45s ease forwards;
-  }
-  @keyframes dealIn{
-    to{ opacity:1; transform: translateY(0); }
-  }
-  .dealName{ font-weight: 900; font-size: 18px; text-align:left; flex: 1; }
-  .dealCardMini{
-    font-weight: 950;
-    padding: 6px 12px;
-    border-radius: 12px;
-    background: rgba(255,255,255,.16);
-    border: 1px solid rgba(255,255,255,.22);
-    min-width: 54px;
-  }
+.smallBtn{
+  padding:6px 10px;
+  font-size:14px;
+  border-radius:999px;
+  width:auto;
+  max-width:none;
+  background:rgba(0,0,0,.35);
+  color:#fff;
+}
 
-  .stage{
-    margin-top: 8px;
-    padding: 12px 10px 8px;
-  }
-  .nameBig{
-    font-size: clamp(34px, 7vw, 56px);
-    font-weight: 950;
-    letter-spacing: .5px;
-    margin: 10px 0 8px;
-    text-shadow: 0 14px 40px rgba(0,0,0,.45);
-  }
+.stage{margin-top:10px;}
 
-  /* Simple (bright) card display */
-  .cardBadge{
-    margin: 8px auto 10px;
-    width: 240px;
-    border-radius: 18px;
-    padding: 18px 14px;
-    background: rgba(255,255,255,.90);
-    color:#111;
-    box-shadow: 0 14px 40px rgba(0,0,0,.25);
-    border: 1px solid rgba(255,255,255,.8);
-  }
-  .cardBadge .val{
-    font-size: 84px;
-    font-weight: 1000;
-    line-height: 1;
-  }
-  .cardBadge .sub{
-    margin-top: 6px;
-    opacity: .75;
-    font-weight: 800;
-  }
+.nameBig{
+  font-size:40px;
+  font-weight:900;
+  margin:10px 0;
+}
 
-  .btnRow{
-    display:flex;
-    gap: 10px;
-    justify-content:center;
-    flex-wrap:wrap;
-    margin-top: 8px;
-  }
-  .btnRow button{
-    width: min(190px, 46%);
-    max-width:none;
-  }
+.cardBox{
+  background:#fff;
+  color:#111;
+  border-radius:18px;
+  padding:20px;
+  font-size:80px;
+  font-weight:900;
+  width:220px;
+  margin:10px auto;
+  box-shadow:0 14px 35px rgba(0,0,0,.25);
+}
 
-  /* 3 piles visualization */
-  .piles{
-    margin: 14px auto 0;
-    width: 98%;
-    max-width: 620px;
-    display:grid;
-    grid-template-columns: 1fr;
-    gap: 10px;
-  }
-  @media (min-width: 560px){
-    .piles{ grid-template-columns: 1fr 1fr 1fr; }
-  }
+.btnRow{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  justify-content:center;
+}
 
-  .pile{
-    border-radius: 16px;
-    background: rgba(255,255,255,.12);
-    border: 1px solid rgba(255,255,255,.20);
-    padding: 10px 10px 12px;
-    box-shadow: 0 10px 24px rgba(0,0,0,.18);
-    text-align:left;
-  }
-  .pileHeader{
-    display:flex;
-    align-items:baseline;
-    justify-content:space-between;
-    gap: 8px;
-    margin-bottom: 8px;
-  }
-  .pileTitle{
-    font-weight: 1000;
-    letter-spacing:.6px;
-    text-transform:uppercase;
-    font-size: 14px;
-    opacity: .95;
-  }
-  .pileCount{
-    font-weight: 950;
-    font-size: 14px;
-    opacity:.95;
-    padding: 4px 10px;
-    border-radius: 999px;
-    background: rgba(0,0,0,.18);
-    border: 1px solid rgba(255,255,255,.14);
-  }
+.btnRow button{width:45%;}
 
-  .pileCards{
-    display:flex;
-    flex-wrap:wrap;
-    gap: 6px;
-    min-height: 44px;
-  }
+.piles{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:10px;
+  margin-top:15px;
+}
 
-  .chip{
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    min-width: 34px;
-    height: 32px;
-    padding: 0 10px;
-    border-radius: 12px;
-    font-weight: 950;
-    background: rgba(255,255,255,.18);
-    border: 1px solid rgba(255,255,255,.22);
-  }
-  .chip.dead{
-    background: rgba(0,0,0,.18);
-    border: 1px solid rgba(255,255,255,.14);
-    opacity: .95;
-  }
+@media(min-width:600px){
+  .piles{grid-template-columns:1fr 1fr 1fr;}
+}
 
-  /* overlays */
-  #deckOverlay{
-    display:none;
-    position:fixed;
-    inset:0;
-    z-index:3000;
-    pointer-events:none;
-    background: rgba(0,0,0,.45);
-    place-items:center;
-  }
-  #deckText{
-    font-weight: 1000;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    font-size: clamp(28px, 6.6vw, 70px);
-    color: #fff;
-    text-shadow: 0 18px 60px rgba(0,0,0,.75);
-    transform: scale(.92);
-    opacity: 0;
-    padding: 0 14px;
-    text-align:center;
-  }
-  .deckOn #deckText{
-    animation: deckBoom 1.15s cubic-bezier(.2,.9,.2,1) forwards;
-  }
-  @keyframes deckBoom{
-    0%{ opacity:0; transform: scale(.88); }
-    20%{ opacity:1; transform: scale(1.06); }
-    60%{ opacity:1; transform: scale(1.00); }
-    100%{ opacity:0; transform: scale(1.02); }
-  }
+.pile{
+  background:rgba(255,255,255,.15);
+  border:1px solid rgba(255,255,255,.25);
+  border-radius:16px;
+  padding:12px;
+}
 
-  #messageOverlay{
-    display:none;
-    position:fixed;
-    inset:0;
-    z-index:3100;
-    background: rgba(0,0,0,.55);
-    place-items:center;
-    pointer-events:none;
-  }
-  #messageText{
-    font-weight: 1000;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    font-size: clamp(44px, 9vw, 92px);
-    color: #fff;
-    text-shadow: 0 18px 60px rgba(0,0,0,.75);
-    transform: scale(.92);
-    opacity: 0;
-  }
-  .msgOn #messageText{
-    animation: msgBoom 2.0s cubic-bezier(.2,.9,.2,1) forwards;
-  }
-  @keyframes msgBoom{
-    0%{ opacity:0; transform: scale(.85); }
-    20%{ opacity:1; transform: scale(1.08); }
-    55%{ opacity:1; transform: scale(1.00); }
-    100%{ opacity:0; transform: scale(1.03); }
-  }
+.pile h3{
+  margin:0 0 6px;
+  font-size:14px;
+  text-transform:uppercase;
+}
+
+.count{
+  font-size:28px;
+  font-weight:900;
+}
+
+/* Dramatic reshuffle */
+#reshuffleOverlay{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:radial-gradient(circle at center, rgba(255,255,255,.2), rgba(0,0,0,.8));
+  z-index:5000;
+  justify-content:center;
+  align-items:center;
+  flex-direction:column;
+}
+
+#reshuffleText{
+  font-size:70px;
+  font-weight:1000;
+  text-shadow:0 20px 60px rgba(0,0,0,.6);
+  animation:pop 1.5s ease forwards;
+}
+
+.cardStack{
+  width:120px;
+  height:160px;
+  background:#fff;
+  border-radius:16px;
+  margin-top:20px;
+  box-shadow:0 15px 40px rgba(0,0,0,.6);
+  animation:spin 1.5s linear infinite;
+}
+
+@keyframes spin{
+  from{transform:rotateY(0);}
+  to{transform:rotateY(360deg);}
+}
+
+@keyframes pop{
+  0%{opacity:0;transform:scale(.7);}
+  30%{opacity:1;transform:scale(1.1);}
+  100%{opacity:0;transform:scale(1.2);}
+}
+
+/* Referee overlay */
+#refOverlay{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.85);
+  z-index:4000;
+  color:#fff;
+  padding:20px;
+  overflow:auto;
+}
+
+#refPanel{
+  max-width:600px;
+  margin:auto;
+}
+
 </style>
 </head>
-
 <body>
+
 <div class="frame">
-  <h1>🎱 Killer Pool</h1>
+<h1>🎱 Killer Pool</h1>
 
-  <div class="rail">
-    <!-- SETUP -->
-    <div id="setup">
-      <div id="playerList"></div>
-      <button class="secondary" onclick="addPlayer()">➕ Add Player</button>
-      <button onclick="drawCards()">🎴 Draw Cards</button>
-
-      <div id="results"></div>
-
-      <button id="startBtn" class="play" onclick="startGame()" style="display:none;">
-        ▶️ Play Game
-      </button>
-    </div>
-
-    <!-- GAME -->
-    <div id="game" class="stage" style="display:none;">
-      <div class="nameBig" id="currentName"></div>
-
-      <div class="cardBadge" aria-label="Assigned card">
-        <div class="val" id="cardVal">A</div>
-        <div class="sub" id="cardSub">Assigned card</div>
-      </div>
-
-      <div class="btnRow">
-        <button class="miss" onclick="doAction('miss')">❌ Miss</button>
-        <button class="pot" onclick="doAction('pot')">🎯 Pot</button>
-        <button class="black" onclick="doAction('black')">⚫ Black Ball</button>
-        <button class="whiteball" onclick="doAction('white')">⚪ White Ball Potted</button>
-      </div>
-
-      <!-- 3 piles UI -->
-      <div class="piles" style="margin-top:14px;">
-        <div class="pile">
-          <div class="pileHeader">
-            <div class="pileTitle">Pile 1 — In play</div>
-            <div class="pileCount" id="p1Count">0</div>
-          </div>
-          <div class="pileCards" id="p1Cards"></div>
-        </div>
-
-        <div class="pile">
-          <div class="pileHeader">
-            <div class="pileTitle">Pile 2 — Banked</div>
-            <div class="pileCount" id="p2Count">0</div>
-          </div>
-          <div class="pileCards" id="p2Cards"></div>
-        </div>
-
-        <div class="pile">
-          <div class="pileHeader">
-            <div class="pileTitle">Pile 3 — Dead</div>
-            <div class="pileCount" id="p3Count">0</div>
-          </div>
-          <div class="pileCards" id="p3Cards"></div>
-        </div>
-      </div>
-
-      <div style="margin-top:10px; opacity:.9; font-weight:850;">
-        Lives shown as: <span style="opacity:.95;">base</span> + <span style="opacity:.95;">extras</span>
-      </div>
-    </div>
-  </div>
+<div class="topButtons">
+<button class="smallBtn" onclick="toggleRef()">🧑‍⚖️ Ref</button>
+<button class="smallBtn" onclick="toggleFullscreen()">⛶ Fullscreen</button>
 </div>
 
-<!-- overlays -->
-<div id="deckOverlay"><div id="deckText">RESHUFFLE</div></div>
-<div id="messageOverlay"><div id="messageText">HAHA UNLUCKY</div></div>
+<div class="rail">
+
+<div id="setup">
+<div id="playerList"></div>
+<button class="secondary" onclick="addPlayer()">➕ Add Player</button>
+<button onclick="drawCards()">🎴 Draw Cards</button>
+<div id="results"></div>
+<button id="startBtn" class="play" onclick="startGame()" style="display:none;">▶️ Play Game</button>
+</div>
+
+<div id="game" class="stage" style="display:none;">
+<div class="nameBig" id="currentName"></div>
+<div class="cardBox" id="cardBox">A</div>
+
+<div class="btnRow">
+<button class="miss" onclick="doAction('miss')">❌ Miss</button>
+<button class="pot" onclick="doAction('pot')">🎯 Pot</button>
+<button class="black" onclick="doAction('black')">⚫ Black</button>
+<button class="whiteball" onclick="doAction('white')">⚪ White</button>
+</div>
+
+<div class="piles">
+<div class="pile"><h3>Pile 1 — In Play</h3><div class="count" id="p1">0</div></div>
+<div class="pile"><h3>Pile 2 — Banked</h3><div class="count" id="p2">0</div></div>
+<div class="pile"><h3>Pile 3 — Dead</h3><div class="count" id="p3">0</div></div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+<!-- Dramatic reshuffle -->
+<div id="reshuffleOverlay">
+<div id="reshuffleText">RESHUFFLE</div>
+<div class="cardStack"></div>
+</div>
+
+<!-- Referee -->
+<div id="refOverlay" onclick="toggleRef()">
+<div id="refPanel" onclick="event.stopPropagation()">
+<h2>🧑‍⚖️ Referee Mode</h2>
+<div id="refContent"></div>
+<button onclick="toggleRef()">Close</button>
+</div>
+</div>
 
 <script>
-  // Assigned cards (unique)
-  const baseDeck = ["A","K","Q","J","10","9","8","7","6","5","4","3","2"];
+let players=[];
+let activePlayers=[];
+let currentIdx=null;
 
-  // Life-token shoe (3 copies = 39 tokens, enough for 13 players)
-  function buildLifeShoe(){
-    const shoe = [];
-    for (let i=0;i<3;i++) shoe.push(...baseDeck);
-    return shoe;
+let pile1=0; // in play
+let pile2=0; // banked
+let pile3=0; // dead
+
+const baseDeck=["A","K","Q","J","10","9","8","7","6","5","4","3","2"];
+
+function addPlayer(){
+  const input=document.createElement("input");
+  input.placeholder="Player name";
+  document.getElementById("playerList").appendChild(input);
+}
+
+function drawCards(){
+  players=[];
+  activePlayers=[];
+  pile1=0; pile2=0; pile3=0;
+
+  const names=[...document.querySelectorAll("#playerList input")]
+    .map(i=>i.value.trim()).filter(Boolean);
+
+  const deck=[...baseDeck].sort(()=>Math.random()-0.5);
+
+  names.forEach(name=>{
+    const card=deck.pop();
+    players.push({name,card,lives:3});
+    pile1+=3;
+  });
+
+  document.getElementById("startBtn").style.display="inline-block";
+  updateUI();
+}
+
+function startGame(){
+  activePlayers=players.map((_,i)=>i);
+  document.getElementById("setup").style.display="none";
+  document.getElementById("game").style.display="block";
+  nextTurn();
+}
+
+function nextTurn(){
+  if(activePlayers.length===1){
+    const w=players[activePlayers[0]];
+    document.getElementById("currentName").textContent=`🏆 ${w.name} WINS`;
+    document.getElementById("cardBox").textContent=w.card;
+    return;
   }
+  currentIdx=activePlayers[Math.floor(Math.random()*activePlayers.length)];
+  const p=players[currentIdx];
+  document.getElementById("currentName").textContent=p.name;
+  document.getElementById("cardBox").textContent=p.card;
+  updateUI();
+}
 
-  let players = [];       // { name, card, baseLives, extras }
-  let activePlayers = []; // indices
-  let currentIdx = null;
+function reshuffle(){
+  if(pile1===0 && pile2>0){
+    showReshuffle();
+    pile1=pile2;
+    pile2=0;
+  }
+}
 
-  // Piles visualized
-  let pile1 = []; // IN PLAY (tokens available to be won)
-  let pile2 = []; // BANKED (won tokens from pot/black)
-  let pile3 = []; // DEAD (lost tokens / markers)
+function doAction(type){
+  const p=players[currentIdx];
 
-  function shuffle(arr){
-    const a = [...arr];
-    for (let i=a.length-1;i>0;i--){
-      const j = Math.floor(Math.random()*(i+1));
-      [a[i],a[j]]=[a[j],a[i]];
+  if(type==="pot"||type==="black"){
+    reshuffle();
+    if(pile1>0){
+      pile1--;
+      pile2++;
+      p.lives++;
     }
-    return a;
+    nextTurn();
+    return;
   }
 
-  function addPlayer(){
-    const count = document.querySelectorAll("#playerList input").length;
-    if (count >= 13) return alert("Maximum 13 players (A–2).");
-    const input = document.createElement("input");
-    input.placeholder = "Player name";
-    document.getElementById("playerList").appendChild(input);
-  }
-
-  function showDeckAlert(text, ms=1100){
-    const overlay = document.getElementById("deckOverlay");
-    const label = document.getElementById("deckText");
-    label.textContent = text;
-
-    overlay.style.display = "grid";
-    overlay.classList.remove("deckOn");
-    void overlay.offsetWidth;
-    overlay.classList.add("deckOn");
-
-    setTimeout(() => {
-      overlay.classList.remove("deckOn");
-      overlay.style.display = "none";
-    }, ms);
-  }
-
-  function showHahaUnlucky(){
-    const overlay = document.getElementById("messageOverlay");
-    overlay.style.display = "grid";
-    overlay.classList.remove("msgOn");
-    void overlay.offsetWidth;
-    overlay.classList.add("msgOn");
-    setTimeout(() => {
-      overlay.classList.remove("msgOn");
-      overlay.style.display = "none";
-    }, 900);
-  }
-
-  function drawCards(){
-    players = [];
-    activePlayers = [];
-    currentIdx = null;
-
-    // reset piles
-    pile2 = [];
-    pile3 = [];
-
-    const results = document.getElementById("results");
-    results.innerHTML = "<h2>Dealing Cards…</h2>";
-
-    const names = [...document.querySelectorAll("#playerList input")]
-      .map(i => i.value.trim())
-      .filter(Boolean);
-
-    if (names.length === 0) {
-      results.innerHTML = "<h2>Please enter at least 1 name.</h2>";
-      document.getElementById("startBtn").style.display = "none";
-      return;
+  if(type==="miss"||type==="white"){
+    if(p.lives>0){
+      p.lives--;
+      pile1--;
+      pile3++;
     }
-    if (names.length > 13) {
-      results.innerHTML = "<h2>Max 13 players.</h2>";
-      document.getElementById("startBtn").style.display = "none";
-      return;
+    if(p.lives<=0){
+      activePlayers=activePlayers.filter(i=>i!==currentIdx);
     }
-
-    // deal unique assigned cards
-    const deck = shuffle(baseDeck);
-    let delay = 0;
-
-    names.forEach(name => {
-      const card = deck.pop();
-      players.push({ name, card, baseLives: 3, extras: 0 });
-
-      setTimeout(() => {
-        const row = document.createElement("div");
-        row.className = "dealRow";
-        row.innerHTML = `
-          <div class="dealName">${escapeHtml(name)}</div>
-          <div class="dealCardMini">${escapeHtml(card)}</div>
-        `;
-        results.appendChild(row);
-      }, delay);
-
-      delay += 220;
-    });
-
-    // Pile 1 = life shoe (tokens in play)
-    pile1 = shuffle(buildLifeShoe());
-
-    setTimeout(() => {
-      document.getElementById("startBtn").style.display = "inline-block";
-      renderPiles();
-    }, delay + 120);
+    nextTurn();
   }
+}
 
-  function startGame(){
-    if (!players.length) return;
-    activePlayers = players.map((_,i)=>i);
+function updateUI(){
+  document.getElementById("p1").textContent=pile1;
+  document.getElementById("p2").textContent=pile2;
+  document.getElementById("p3").textContent=pile3;
+}
 
-    document.getElementById("setup").style.display = "none";
-    document.getElementById("game").style.display = "block";
+function showReshuffle(){
+  const o=document.getElementById("reshuffleOverlay");
+  o.style.display="flex";
+  setTimeout(()=>o.style.display="none",1500);
+}
 
-    pickNextShooter();
+function toggleRef(){
+  const r=document.getElementById("refOverlay");
+  if(r.style.display==="block"){r.style.display="none";return;}
+  let html=`<h3>Piles</h3>
+  In Play: ${pile1}<br>
+  Banked: ${pile2}<br>
+  Dead: ${pile3}<br><br>
+  <h3>Players</h3>`;
+  players.forEach(p=>{
+    html+=`${p.name} — ${p.lives} lives<br>`;
+  });
+  document.getElementById("refContent").innerHTML=html;
+  r.style.display="block";
+}
+
+function toggleFullscreen(){
+  if(!document.fullscreenElement){
+    document.documentElement.requestFullscreen();
+  }else{
+    document.exitFullscreen();
   }
+}
 
-  function totalLives(p){
-    return Math.max(0, p.baseLives) + (p.extras || 0);
-  }
-
-  function pickNextShooter(){
-    if (activePlayers.length === 1){
-      const w = players[activePlayers[0]];
-      document.getElementById("currentName").textContent = `🏆 ${w.name} WINS (${totalLives(w)} lives)`;
-      document.getElementById("cardVal").textContent = w.card;
-      document.getElementById("cardSub").textContent = "Winner";
-      renderPiles();
-      return;
-    }
-
-    if (activePlayers.length === 0){
-      document.getElementById("currentName").textContent = "Game Over";
-      document.getElementById("cardVal").textContent = "—";
-      document.getElementById("cardSub").textContent = "";
-      renderPiles();
-      return;
-    }
-
-    currentIdx = activePlayers[Math.floor(Math.random()*activePlayers.length)];
-    const p = players[currentIdx];
-    document.getElementById("currentName").textContent = `${p.name} — ${p.baseLives} + ${p.extras} (=${totalLives(p)})`;
-    document.getElementById("cardVal").textContent = p.card;
-    document.getElementById("cardSub").textContent = "Assigned card (stays the same)";
-    renderPiles();
-  }
-
-  // When we need a token from pile 1 but it's empty:
-  // reshuffle pile 2 back into pile 1 (pile 3 stays dead forever)
-  function takeTokenFromPile1(){
-    if (pile1.length === 0){
-      if (pile2.length > 0){
-        showDeckAlert("PILE 1 EMPTY — RESHUFFLING PILE 2");
-        pile1 = shuffle(pile2);
-        pile2 = [];
-      } else {
-        showDeckAlert("NO TOKENS LEFT");
-        return null;
-      }
-    }
-    return pile1.pop() || null;
-  }
-
-  // Rules implemented:
-  // POT/BLACK: token moves P1 -> P2 and player extras +1
-  // MISS/WHITE: remove extra first (P2 -> P3), else baseLives-- and add "✖" to P3
-  function doAction(type){
-    if (currentIdx === null) return;
-    const p = players[currentIdx];
-
-    if (type === "pot" || type === "black"){
-      const token = takeTokenFromPile1();
-      if (token){
-        pile2.push(token); // bank it
-        p.extras += 1;     // player earns extra life
-      }
-      renderPiles();
-      pickNextShooter();
-      return;
-    }
-
-    if (type === "white"){
-      showHahaUnlucky();
-    }
-
-    if (type === "miss" || type === "white"){
-      // lose an extra first, otherwise base
-      if (p.extras > 0){
-        p.extras -= 1;
-
-        // move a banked token to dead if possible (visual consistency)
-        // (if pile2 empty due to edge cases, still mark dead)
-        const moved = pile2.pop();
-        pile3.push(moved || "✖");
-      } else {
-        p.baseLives -= 1;
-        pile3.push("✖");
-      }
-
-      // eliminate if no lives left
-      if (p.baseLives <= 0 && p.extras <= 0){
-        activePlayers = activePlayers.filter(i => i !== currentIdx);
-      }
-
-      renderPiles();
-      setTimeout(() => pickNextShooter(), type === "white" ? 350 : 0);
-      return;
-    }
-  }
-
-  function renderPile(elCards, elCount, arr, dead=false){
-    elCount.textContent = arr.length;
-    const maxShow = 18; // keep it readable on mobile
-    const view = arr.slice(-maxShow);
-    elCards.innerHTML = view.map(v => `<span class="chip ${dead ? "dead":""}">${escapeHtml(v)}</span>`).join("");
-    if (arr.length > maxShow){
-      elCards.innerHTML = `<span class="chip ${dead ? "dead":""}">+${arr.length - maxShow}</span>` + elCards.innerHTML;
-    }
-  }
-
-  function renderPiles(){
-    renderPile(
-      document.getElementById("p1Cards"),
-      document.getElementById("p1Count"),
-      pile1,
-      false
-    );
-    renderPile(
-      document.getElementById("p2Cards"),
-      document.getElementById("p2Count"),
-      pile2,
-      false
-    );
-    renderPile(
-      document.getElementById("p3Cards"),
-      document.getElementById("p3Count"),
-      pile3,
-      true
-    );
-  }
-
-  function escapeHtml(str){
-    return String(str)
-      .replaceAll("&","&amp;")
-      .replaceAll("<","&lt;")
-      .replaceAll(">","&gt;")
-      .replaceAll('"',"&quot;")
-      .replaceAll("'","&#039;");
-  }
-
-  // start with 2 inputs
-  addPlayer();
-  addPlayer();
+addPlayer();
+addPlayer();
 </script>
+
 </body>
 </html>
